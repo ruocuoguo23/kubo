@@ -2,9 +2,10 @@ package coreapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/ipfs/boxo/namesys/resolve"
+	"github.com/ipfs/boxo/namesys"
 	"github.com/ipfs/kubo/tracing"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -40,8 +41,8 @@ func (api *CoreAPI) ResolvePath(ctx context.Context, p path.Path) (path.Immutabl
 	ctx, span := tracing.Span(ctx, "CoreAPI", "ResolvePath", trace.WithAttributes(attribute.String("path", p.String())))
 	defer span.End()
 
-	p, err := resolve.ResolveIPNS(ctx, api.namesys, p)
-	if err == resolve.ErrNoNamesys {
+	p, _, err := namesys.ResolveIPNS(ctx, api.namesys, p)
+	if errors.Is(err, namesys.ErrNoNamesys) {
 		return nil, coreiface.ErrOffline
 	} else if err != nil {
 		return nil, err

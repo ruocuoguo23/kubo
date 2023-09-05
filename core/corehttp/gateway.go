@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/ipfs/boxo/blockservice"
 	iface "github.com/ipfs/boxo/coreiface"
@@ -170,10 +171,10 @@ func (o *offlineGatewayErrWrapper) GetIPNSRecord(ctx context.Context, c cid.Cid)
 	return rec, err
 }
 
-func (o *offlineGatewayErrWrapper) ResolveMutable(ctx context.Context, path path.Path) (path.ImmutablePath, error) {
-	imPath, err := o.gwimpl.ResolveMutable(ctx, path)
+func (o *offlineGatewayErrWrapper) ResolveMutable(ctx context.Context, path path.Path) (path.ImmutablePath, time.Duration, error) {
+	imPath, ttl, err := o.gwimpl.ResolveMutable(ctx, path)
 	err = offlineErrWrap(err)
-	return imPath, err
+	return imPath, ttl, err
 }
 
 func (o *offlineGatewayErrWrapper) GetDNSLinkRecord(ctx context.Context, s string) (path.Path, error) {

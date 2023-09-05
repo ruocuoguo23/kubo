@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ipfs/boxo/namesys"
 	version "github.com/ipfs/kubo"
@@ -17,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	iface "github.com/ipfs/boxo/coreiface"
-	nsopts "github.com/ipfs/boxo/coreiface/options/namesys"
 	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
@@ -27,41 +27,41 @@ import (
 
 type mockNamesys map[string]path.Path
 
-func (m mockNamesys) Resolve(ctx context.Context, name string, opts ...nsopts.ResolveOpt) (value path.Path, err error) {
-	cfg := nsopts.DefaultResolveOpts()
+func (m mockNamesys) Resolve(ctx context.Context, name string, opts ...namesys.ResolveOption) (value path.Path, ttl time.Duration, err error) {
+	cfg := namesys.DefaultResolveOptions()
 	for _, o := range opts {
 		o(&cfg)
 	}
 	depth := cfg.Depth
-	if depth == nsopts.UnlimitedDepth {
+	if depth == namesys.UnlimitedDepth {
 		// max uint
 		depth = ^uint(0)
 	}
 	for strings.HasPrefix(name, "/ipns/") {
 		if depth == 0 {
-			return value, namesys.ErrResolveRecursion
+			return value, 0, namesys.ErrResolveRecursion
 		}
 		depth--
 
 		var ok bool
 		value, ok = m[name]
 		if !ok {
-			return nil, namesys.ErrResolveFailed
+			return nil, 0, namesys.ErrResolveFailed
 		}
 		name = value.String()
 	}
-	return value, nil
+	return value, 0, nil
 }
 
-func (m mockNamesys) ResolveAsync(ctx context.Context, name string, opts ...nsopts.ResolveOpt) <-chan namesys.Result {
-	out := make(chan namesys.Result, 1)
-	v, err := m.Resolve(ctx, name, opts...)
-	out <- namesys.Result{Path: v, Err: err}
+func (m mockNamesys) ResolveAsync(ctx context.Context, name string, opts ...namesys.ResolveOption) <-chan namesys.ResolveResult {
+	out := make(chan namesys.ResolveResult, 1)
+	v, ttl, err := m.Resolve(ctx, name, opts...)
+	out <- namesys.ResolveResult{Path: v, TTL: ttl, Err: err}
 	close(out)
 	return out
 }
 
-func (m mockNamesys) Publish(ctx context.Context, name ci.PrivKey, value path.Path, opts ...nsopts.PublishOption) error {
+func (m mockNamesys) Publish(ctx context.Context, name ci.PrivKey, value path.Path, opts ...namesys.PublishOption) error {
 	return errors.New("not implemented for mockNamesys")
 }
 

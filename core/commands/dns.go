@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	nsopts "github.com/ipfs/boxo/coreiface/options/namesys"
 	namesys "github.com/ipfs/boxo/namesys"
 	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
 	ncmd "github.com/ipfs/kubo/core/commands/name"
@@ -47,12 +46,12 @@ It will work across multiple DNSLinks and IPNS keys.
 		name := req.Arguments[0]
 		resolver := namesys.NewDNSResolver(node.DNSResolver.LookupTXT)
 
-		var routing []nsopts.ResolveOpt
+		var routing []namesys.ResolveOption
 		if !recursive {
-			routing = append(routing, nsopts.Depth(1))
+			routing = append(routing, namesys.ResolveWithDepth(1))
 		}
 
-		output, err := resolver.Resolve(req.Context, name, routing...)
+		output, _, err := resolver.Resolve(req.Context, name, routing...)
 		if err != nil && (recursive || err != namesys.ErrResolveRecursion) {
 			return err
 		}

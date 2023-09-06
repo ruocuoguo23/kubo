@@ -89,6 +89,10 @@ require (
 	google.golang.org/protobuf v1.31.0
 )
 
+replace (
+	github.com/ipfs/boxo => ./pkg/boxo
+)
+
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Jorropo/jsync v1.0.1 // indirect
